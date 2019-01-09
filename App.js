@@ -51,13 +51,12 @@ export default class App extends React.Component {
       return;
     }
     this.setState({ showCamera: false });
+
+    var formData  = new FormData();
+    formData.append('tracking_code', data);
     fetch('https://lazada-suli.herokuapp.com/update-not-returned', {
       method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ tracking_code: data }),
+      body: formData,
     })
       .then((res) => res.json())
       .then((dataRes) => {
