@@ -47,6 +47,9 @@ export default class App extends React.Component {
   }
 
   handleBarCodeScanned = ({ type, data }) => {
+    if (data.substring(0, 2) !== 'VN' && data.substring(data.length - 2) !== 'VN' && data.substring(0, 4) !== 'NLVN') {
+      return;
+    }
     this.setState({ showCamera: false });
     fetch('https://lazada-suli.herokuapp.com/update-not-returned', {
       method: 'POST',
