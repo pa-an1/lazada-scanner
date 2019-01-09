@@ -1,0 +1,71 @@
+import React from 'react';
+import { StyleSheet, Text, View, Alert } from 'react-native';
+import { BarCodeScanner, Permissions } from 'expo';
+
+export default class App extends React.Component {
+  state = {
+    hasCameraPermission: null,
+    showCamera: true,
+  }
+
+  async componentDidMount() {
+    const { status } = await Permissions.askAsync(Permissions.CAMERA);
+    this.setState({ hasCameraPermission: status === 'granted' });
+  }
+
+  render() {
+    const { hasCameraPermission } = this.state;
+
+    if (hasCameraPermission === null) {
+      return <Text>Requesting for camera permission</Text>;
+    }
+    if (hasCameraPermission === false) {
+      return <Text>No access to camera</Text>;
+    }
+    return (
+      <View style={{ flex: 1 }}>
+        {this.state.showCamera &&
+          <BarCodeScanner
+            onBarCodeScanned={this.handleBarCodeScanned}
+            barCodeTypes={['org.iso.Code128']}
+            style={StyleSheet.absoluteFill}
+          />
+        }
+      </View>
+    );
+  }
+
+  mAlert = (msg) => {
+    Alert.alert(msg,
+      '',
+      [{
+        text: 'OK',
+        onPress: () => {this.setState({ showCamera: true });}
+      }],
+      { cancelable: false }
+    );
+  }
+
+  handleBarCodeScanned = ({ type, data }) => {
+    this.setState({ showCamera: false });
+    fetch('https://lazada-suli.herokuapp.com/update-not-returned', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ tracking_code: data }),
+    })
+      .then((res) => res.json())
+      .then((dataRes) => {
+        if (dataRes.ok) {
+          this.mAlert(`[${data}]-Success`)
+        } else {
+          this.mAlert(`[${data}]-${dataRes.error}`);
+        }
+      })
+      .catch((err) => {
+        this.mAlert(`[${data}]-${JSON.stringify(err)}`);
+      });
+  }
+}
